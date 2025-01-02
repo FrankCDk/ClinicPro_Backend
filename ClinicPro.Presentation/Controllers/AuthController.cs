@@ -25,6 +25,7 @@ namespace ClinicPro.Presentation.Controllers
         {
         
             LoginResponse result = await _authService.Login(request);
+
             return Ok(new Response<LoginResponse>
             {
                 Data = result,
