@@ -3,7 +3,6 @@ using ClinicPro.Application.Dtos.Auth;
 using ClinicPro.Application.Dtos.Login;
 using ClinicPro.Application.Interfaces;
 using ClinicPro.Application.Validations.Auth;
-using ClinicPro.Core.Common;
 using ClinicPro.Core.Entities;
 using ClinicPro.Core.Interfaces;
 using ClinicPro.Utils;
@@ -104,7 +103,8 @@ namespace ClinicPro.Application.Services
                 Expires = DateTime.Now.AddMinutes(expirationMinutes),
                 Issuer = issuer,
                 Audience = audience,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature),
+                NotBefore = DateTime.Now
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
