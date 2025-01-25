@@ -2,14 +2,14 @@
 {
     public class User
     {
-        public int Usr_id { get; set; }
-        public string Usr_first_name { get; set; } = string.Empty;
-        public string Usr_last_name { get; set; } = string.Empty;
-        public string Usr_rol { get; set; } = string.Empty;
-        public string Usr_email { get; set; } = string.Empty;
-        public string Usr_password_hash { get; set; } = string.Empty;
-        public DateOnly Usr_date_of_birth { get; set; }
-        public bool Usr_is_active { get; set; } = false;
+        public int UserId { get; set; }
+        public string UserFirstName { get; set; } = string.Empty;
+        public string UserLastName { get; set; } = string.Empty;
+        public int UserRol { get; set; }
+        public string UserEmail { get; set; } = string.Empty;
+        public string UserPasswordHash { get; set; } = string.Empty;
+        public DateOnly UserDateBirth { get; set; }
+        public bool UserIsActive { get; set; } = false;
 
     }
 }

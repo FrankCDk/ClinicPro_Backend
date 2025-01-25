@@ -8,5 +8,6 @@ namespace ClinicPro.Application.Interfaces
     {
         Task<LoginResponse> Login(LoginRequest request);
         Task Register(RegisterRequest request);
+        Task<RenovateTokenResponse> RenovateToken(RenovateTokenRequest request);
     }
 }

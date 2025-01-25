@@ -35,6 +35,19 @@ namespace ClinicPro.Presentation.Controllers
 
         }
 
+
+        [HttpPost]
+        public async Task<IActionResult> RenovateToken([FromBody] RenovateTokenRequest request)
+        {
+            await _authService.RenovateToken(request);
+            return Ok(new Response<LoginResponse>
+            {
+                Message = "Token renovado exitosamente.",
+                StatusCode = 200
+            });
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -45,7 +58,6 @@ namespace ClinicPro.Presentation.Controllers
                 StatusCode = 200
             });
         }
-
 
     }
 }

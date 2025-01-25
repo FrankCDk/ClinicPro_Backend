@@ -29,7 +29,7 @@ namespace ClinicPro.Application.Services
             _configuration = configuration;
         }
 
-        #region Login de usuario
+        #region Login
         public async Task<LoginResponse> Login(LoginRequest request)
         {
             CreateLoginValidator validationRules = new CreateLoginValidator();
@@ -54,7 +54,7 @@ namespace ClinicPro.Application.Services
                 throw new Exception("El usuario no se encuentra activado.");
             }
 
-            if (!PasswordHasher.VerifyPassword(request.Password, usuario.Usr_password_hash))
+            if (!PasswordHasher.VerifyPassword(request.Password, usuario.UserPasswordHash))
             {
                 throw new Exception("La contraseña es incorrecta.");
             }
@@ -62,6 +62,57 @@ namespace ClinicPro.Application.Services
             response.Token = GenerateJwtToken(usuario);
             return response;
         }
+        #endregion
+
+
+        #region Renovate Token
+        public async Task<RenovateTokenResponse> RenovateToken(RenovateTokenRequest request)
+        {
+
+            User user = _mapper.Map<User>(request);
+
+            return new RenovateTokenResponse
+            {
+                Token = GenerateJwtToken(user)
+            };
+
+        }
+        #endregion
+
+
+
+        #region Registro de usuario
+        public async Task Register(RegisterRequest request)
+        {
+
+            CreateRegisterValidator validationRules = new CreateRegisterValidator();
+            ValidationResult validationResult = validationRules.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors);
+            }
+
+            if(request.Password != request.ConfirmPassword)
+            {
+                throw new Exception("Las contraseñas no coinciden.");
+            }
+
+            request.Password = PasswordHasher.HashPassword(request.Password);
+
+            User usuario = _mapper.Map<User>(request);
+
+            bool execute = await _userRepository.Register(usuario);
+
+            if(!execute)
+            {
+                throw new Exception("No se pudo registrar el usuario.");
+            }
+
+        }
+        #endregion
+
+        #region Metodos privados
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -95,10 +146,10 @@ namespace ClinicPro.Application.Services
             {
                 Subject = new ClaimsIdentity(
                 [
-                    new Claim(ClaimTypes.NameIdentifier, user.Usr_id.ToString()),
-                    new Claim(ClaimTypes.Name, user.Usr_first_name),
-                    new Claim(ClaimTypes.Email, user.Usr_email),
-                    new Claim(ClaimTypes.Role, user.Usr_rol),
+                    new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                    new Claim(ClaimTypes.Name, user.UserFirstName),
+                    new Claim(ClaimTypes.Email, user.UserEmail),
+                    new Claim(ClaimTypes.Role, user.UserRol.ToString()),
                 ]),
                 Expires = DateTime.Now.AddMinutes(expirationMinutes),
                 Issuer = issuer,
@@ -109,38 +160,7 @@ namespace ClinicPro.Application.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
         #endregion
-
-        #region Registro de usuario
-        public async Task Register(RegisterRequest request)
-        {
-
-            CreateRegisterValidator validationRules = new CreateRegisterValidator();
-            ValidationResult validationResult = validationRules.Validate(request);
-
-            if (!validationResult.IsValid)
-            {
-                throw new ValidationException(validationResult.Errors);
-            }
-
-            if(request.Password != request.ConfirmPassword)
-            {
-                throw new Exception("Las contraseñas no coinciden.");
-            }
-
-            request.Password = PasswordHasher.HashPassword(request.Password);
-
-            User usuario = _mapper.Map<User>(request);
-
-            bool execute = await _userRepository.Register(usuario);
-
-            if(!execute)
-            {
-                throw new Exception("No se pudo registrar el usuario.");
-            }
-
-        }
-        #endregion
-
     }
 }

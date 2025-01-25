@@ -1,3 +1,5 @@
+using ClinicPro.Application.Features.Doctors.Commands.CreateDoctor;
+using ClinicPro.Application.Features.Doctors.Queries.GetDoctors;
 using ClinicPro.Application.Interfaces;
 using ClinicPro.Application.Mapper;
 using ClinicPro.Application.Services;
@@ -20,12 +22,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(UserMappingProfile));
+builder.Services.AddMediatR(config =>
+{
+    config.RegisterServicesFromAssembly(typeof(CreateDoctorCommand).Assembly);
+    config.RegisterServicesFromAssembly(typeof(GetDoctorsQuery).Assembly);
+});
+
 
 // Application
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Infrastructure
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 // Add MySQL
 var connectionString = builder.Configuration.GetConnectionString("MySQLConnection") ?? throw new InvalidOperationException("Connection string 'MySQLConnection' not found.");
