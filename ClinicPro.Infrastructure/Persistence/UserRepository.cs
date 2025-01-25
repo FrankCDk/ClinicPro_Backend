@@ -1,6 +1,7 @@
 ﻿using ClinicPro.Core.Entities;
 using ClinicPro.Core.Interfaces;
 using ClinicPro.Infrastructure.Persistence.MySQLConn;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,26 +22,26 @@ namespace ClinicPro.Infrastructure.Persistence
         public async Task<User?> Login(User usuario)
         {
             User? user = null;
-            var query = @"SELECT usr_first_name, usr_last_name, usr_rol, usr_email, usr_password_hash, usr_is_active FROM users WHERE usr_email = @email LIMIT 1";
+            var query = @"SELECT user_first_name, user_last_name, user_role_id, user_email, user_password_hash, user_is_active FROM users WHERE user_email = @email LIMIT 1";
 
             using var cn = _mySQLDatabase.GetConnection();
             await cn.OpenAsync();
 
             using var cmd = cn.CreateCommand();
             cmd.CommandText = query;
-            cmd.Parameters.AddWithValue("@email", usuario.Usr_email);
+            cmd.Parameters.AddWithValue("@email", usuario.UserEmail);
 
             using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
                 user = new User
                 {
-                    Usr_first_name = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
-                    Usr_last_name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                    Usr_rol = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                    Usr_email = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                    Usr_password_hash = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                    Usr_is_active = reader.IsDBNull(5) ? false : reader.GetBoolean(5)
+                    UserFirstName = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                    UserLastName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    UserRol = reader.IsDBNull(2) ? 4 : reader.GetInt32(2),
+                    UserEmail = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    UserPasswordHash = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                    UserIsActive = reader.IsDBNull(5) ? false : reader.GetBoolean(5)
                 };
             }
 
@@ -52,26 +53,39 @@ namespace ClinicPro.Infrastructure.Persistence
         {
 
             var query = @"INSERT INTO users (
-                    usr_first_name, 
-                    usr_last_name, 
-                    usr_rol, 
-                    usr_email, 
-                    usr_password_hash, 
-                    usr_date_of_birth, 
-                    usr_is_active
+                    user_first_name, 
+                    user_last_name, 
+                    user_role_id, 
+                    user_email, 
+                    user_password_hash, 
+                    user_date_of_birth, 
+                    user_is_active
                 ) VALUES (@nombre, @apellido, @role, @email, @password, @birthdate, @isActive)";
 
             using var cn = _mySQLDatabase.GetConnection();
             await cn.OpenAsync();
             using var cmd = cn.CreateCommand();
             cmd.CommandText = query;
-            cmd.Parameters.AddWithValue("@nombre", usuario.Usr_first_name);
-            cmd.Parameters.AddWithValue("@apellido", usuario.Usr_last_name);
-            cmd.Parameters.AddWithValue("@role", usuario.Usr_rol);
-            cmd.Parameters.AddWithValue("@email", usuario.Usr_email);
-            cmd.Parameters.AddWithValue("@password", usuario.Usr_password_hash);
-            cmd.Parameters.AddWithValue("@birthdate", usuario.Usr_date_of_birth.ToString("yyyy-MM-dd"));
-            cmd.Parameters.AddWithValue("@isActive", usuario.Usr_is_active);
+
+            cmd.Parameters.Add("@nombre", MySqlDbType.VarChar).Value = usuario.UserFirstName;
+            cmd.Parameters.Add("@apellido", MySqlDbType.VarChar).Value = usuario.UserLastName;
+            cmd.Parameters.Add("@role", MySqlDbType.Int32).Value = usuario.UserRol;
+            cmd.Parameters.Add("@email", MySqlDbType.VarChar).Value = usuario.UserEmail;
+            cmd.Parameters.Add("@password", MySqlDbType.VarChar).Value = usuario.UserPasswordHash;
+            cmd.Parameters.Add("@birthdate", MySqlDbType.Date).Value = usuario.UserDateBirth;
+            cmd.Parameters.Add("@isActive", MySqlDbType.Bit).Value = usuario.UserIsActive;
+
+
+
+
+
+            cmd.Parameters.AddWithValue("@nombre", usuario.UserFirstName);
+            cmd.Parameters.AddWithValue("@apellido", usuario.UserLastName);
+            cmd.Parameters.AddWithValue("@role", usuario.UserRol);
+            cmd.Parameters.AddWithValue("@email", usuario.UserEmail);
+            cmd.Parameters.AddWithValue("@password", usuario.UserPasswordHash);
+            cmd.Parameters.AddWithValue("@birthdate", usuario.UserDateBirth.ToString("yyyy-MM-dd"));
+            cmd.Parameters.AddWithValue("@isActive", usuario.UserIsActive);
 
             var result = await cmd.ExecuteNonQueryAsync();
             await cn.CloseAsync();

@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="MediatR" Version="12.4.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
   </ItemGroup>
@@ -16,6 +17,10 @@
   <ItemGroup>
     <ProjectReference Include="..\ClinicPro.Core\ClinicPro.Core.csproj" />
     <ProjectReference Include="..\ClinicPro.Utils\ClinicPro.Utils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Validations\Doctor\" />
   </ItemGroup>
 
 </Project>
