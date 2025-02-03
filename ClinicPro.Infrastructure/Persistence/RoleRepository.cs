@@ -2,11 +2,7 @@
 using ClinicPro.Core.Interfaces;
 using ClinicPro.Infrastructure.Persistence.MySQLConn;
 using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ClinicPro.Infrastructure.Persistence
 {
@@ -44,36 +40,109 @@ namespace ClinicPro.Infrastructure.Persistence
 
         }
 
-        public Task<bool> DeleteRole(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<List<Role>> GetAllRoles(Role role)
+        public async Task<bool> DeactivateRole(int id)
         {
             StringBuilder query = new StringBuilder();
-            var parameters = new List<MySqlParameter>();
-
-            query.Append("SELECT role_id, role_code, role_name, role_description, role_is_active FROM roles WHERE 1 = 1 ");
-
-            if(!string.IsNullOrEmpty(role.RolCode))
-            {
-                query.Append(" role_code = @code");
-            }   
+            query.Append("UPDATE roles SET role_is_active = @isActive WHERE role_id = @id");
 
             using var cn = _mySQLDatabase.GetConnection();
             await cn.OpenAsync();
 
             using var cmd = cn.CreateCommand();
+            cmd.CommandText = query.ToString();
+            cmd.Parameters.Add("@isActive", MySqlDbType.Bit).Value = false;
+            cmd.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
 
+            var result = await cmd.ExecuteNonQueryAsync();
+            await cn.CloseAsync();
 
-
-            throw new NotImplementedException();
+            return result > 0;
         }
 
-        public Task<Role> GetRoleById(int id)
+        public async Task<List<Role>> GetAllRoles(Role role)
         {
-            throw new NotImplementedException();
+            List<Role> lista = new List<Role>();
+            StringBuilder query = new StringBuilder();
+            List<MySqlParameter> parameters = new List<MySqlParameter>();
+
+            query.Append("SELECT role_id, role_code, role_name, role_description, role_is_active FROM roles WHERE 1 = 1 ");
+
+            if(!string.IsNullOrEmpty(role.RolCode))
+            {
+                query.Append(", role_code = @code");
+                parameters.Add(new MySqlParameter("@code", MySqlDbType.VarChar) { Value = role.RolCode});
+            }
+
+            if (!string.IsNullOrEmpty(role.RolName))
+            {
+                query.Append(", role_name = @name");
+                parameters.Add(new MySqlParameter("@name", MySqlDbType.VarChar) { Value = role.RolName });
+
+            }
+
+            if (!string.IsNullOrEmpty(role.RolCode))
+            {
+                query.Append(", role_description = @description");
+                parameters.Add(new MySqlParameter("@description", MySqlDbType.VarChar) { Value = role.RolDescription });
+
+            }
+
+
+            if (!string.IsNullOrEmpty(role.RolCode))
+            {
+                query.Append(", role_is_active = @isActive");
+                parameters.Add(new MySqlParameter("@isActive", MySqlDbType.Bit) { Value = role.RolIsActive });
+
+            }
+
+            using var cn = _mySQLDatabase.GetConnection();
+            await cn.OpenAsync();
+
+            using var cmd = cn.CreateCommand();
+            cmd.CommandText= query.ToString();
+            cmd.Parameters.AddRange(parameters.ToArray());
+            using var rd = await cmd.ExecuteReaderAsync();
+
+            while(await rd.ReadAsync())
+            {
+                lista.Add(new Role
+                {
+                    RolId = rd.GetInt32(0),
+                    RolCode = rd.GetString(1),
+                    RolName = rd.GetString(2),
+                    RolDescription = rd.GetString(3),
+                    RolIsActive = rd.GetBoolean(4)
+                });
+            }
+
+            return lista;
+
+        }
+
+        public async Task<Role?> GetRoleById(int id)
+        {
+            
+            StringBuilder query = new StringBuilder();
+            query.Append("SELECT role_id, role_code, role_name, role_description, role_is_active FROM roles WHERE role_id = @id LIMIT 1");
+            using var cn = _mySQLDatabase.GetConnection();
+            await cn.OpenAsync();
+            using var cmd = cn.CreateCommand();
+            cmd.CommandText = query.ToString();
+            cmd.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
+            using var rd = await cmd.ExecuteReaderAsync();
+            if (await rd.ReadAsync())
+            {
+                return new Role
+                {
+                    RolId = rd.GetInt32(0),
+                    RolCode = rd.GetString(1),
+                    RolName = rd.GetString(2),
+                    RolDescription = rd.GetString(3),
+                    RolIsActive = rd.GetBoolean(4)
+                };
+            }
+            return null;
+
         }
 
         public async Task<bool> UpdateRole(Role role)

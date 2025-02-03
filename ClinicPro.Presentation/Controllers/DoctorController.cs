@@ -22,7 +22,6 @@ namespace ClinicPro.Presentation.Controllers
             _mediator = mediator;
         }
 
-
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateDoctorCommand request)
         {

@@ -75,18 +75,6 @@ namespace ClinicPro.Infrastructure.Persistence
             cmd.Parameters.Add("@birthdate", MySqlDbType.Date).Value = usuario.UserDateBirth;
             cmd.Parameters.Add("@isActive", MySqlDbType.Bit).Value = usuario.UserIsActive;
 
-
-
-
-
-            cmd.Parameters.AddWithValue("@nombre", usuario.UserFirstName);
-            cmd.Parameters.AddWithValue("@apellido", usuario.UserLastName);
-            cmd.Parameters.AddWithValue("@role", usuario.UserRol);
-            cmd.Parameters.AddWithValue("@email", usuario.UserEmail);
-            cmd.Parameters.AddWithValue("@password", usuario.UserPasswordHash);
-            cmd.Parameters.AddWithValue("@birthdate", usuario.UserDateBirth.ToString("yyyy-MM-dd"));
-            cmd.Parameters.AddWithValue("@isActive", usuario.UserIsActive);
-
             var result = await cmd.ExecuteNonQueryAsync();
             await cn.CloseAsync();
 

@@ -3,14 +3,16 @@ using ClinicPro.Application.Features.Doctors.Queries.GetDoctors;
 using ClinicPro.Application.Interfaces;
 using ClinicPro.Application.Mapper;
 using ClinicPro.Application.Services;
-using ClinicPro.Application.Validations.Auth;
 using ClinicPro.Core.Interfaces;
 using ClinicPro.Infrastructure.Middleware;
 using ClinicPro.Infrastructure.Persistence;
 using ClinicPro.Infrastructure.Persistence.MySQLConn;
-using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
+// using AspNetCoreRateLimit; 
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,13 +22,62 @@ builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(UserMappingProfile));
 builder.Services.AddMediatR(config =>
 {
     config.RegisterServicesFromAssembly(typeof(CreateDoctorCommand).Assembly);
     config.RegisterServicesFromAssembly(typeof(GetDoctorsQuery).Assembly);
 });
+
+//Swagger
+// Configura Swagger
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ClinicPro_Backend", Version = "v1" });
+
+    // Configuración de autenticación con Bearer
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Introduce el token JWT en el formato: Bearer {token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
+
+// Rate Limiting > NET 7
+//builder.Services.AddRateLimiter(options =>
+//{
+//    options.AddFixedWindowLimiter("fixed", limiterOptions =>
+//    {
+//        limiterOptions.PermitLimit = 2;
+//        limiterOptions.Window = TimeSpan.FromMinutes(1);
+//    });
+//});
+
+//Rate Limiting < NET 7
+//builder.Services.AddMemoryCache();
+//builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+//builder.Services.AddInMemoryRateLimiting();
+//builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
 
 // Application
@@ -82,10 +133,18 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<RateLimitingMiddleware>();
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// < NET 7
+//app.UseIpRateLimiting();
+
+// > NET 7
+//app.UseRateLimiter();
+//app.MapControllers().RequireRateLimiting("fixed");
 
 app.MapControllers();
 

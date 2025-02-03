@@ -2,7 +2,7 @@
 
 namespace ClinicPro.Application.Features.Roles.Commands.Update
 {
-    public class UpdateRoleCommand : IRequest<int>
+    public class UpdateRoleCommand : IRequest<bool>
     {
 
         public int Id { get; set; }

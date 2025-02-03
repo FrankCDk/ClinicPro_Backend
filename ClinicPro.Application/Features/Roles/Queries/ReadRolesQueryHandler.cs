@@ -29,7 +29,6 @@ namespace ClinicPro.Application.Features.Roles.Queries
             return _mapper.Map<List<RoleResponse>>(lista);
 
 
-
         }
     }
 }
