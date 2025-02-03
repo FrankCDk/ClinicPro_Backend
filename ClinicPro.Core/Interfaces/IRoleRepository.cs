@@ -7,7 +7,7 @@ namespace ClinicPro.Core.Interfaces
         Task<bool> CreateRole(Role role);
         Task<bool> UpdateRole(Role role);
         Task<List<Role>> GetAllRoles(Role role);
-        Task<Role> GetRoleById(int id);
-        Task<bool> DeleteRole(int id);
+        Task<Role?> GetRoleById(int id);
+        Task<bool> DeactivateRole(int id);
     }
 }

@@ -31,6 +31,7 @@ namespace ClinicPro.Application.Mapper
                 .ForMember(dest => dest.RolIsActive, memberOptions: opt => opt.MapFrom(src => src.IsActive));
 
             CreateMap<Role, RoleResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.RolId))
                 .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.RolCode))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.RolDescription))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.RolName))
