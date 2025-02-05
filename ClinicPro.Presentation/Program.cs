@@ -1,4 +1,4 @@
-using ClinicPro.Application.Features.Doctors.Commands.CreateDoctor;
+﻿using ClinicPro.Application.Features.Doctors.Commands.CreateDoctor;
 using ClinicPro.Application.Features.Doctors.Queries.GetDoctors;
 using ClinicPro.Application.Interfaces;
 using ClinicPro.Application.Mapper;
@@ -10,6 +10,10 @@ using ClinicPro.Infrastructure.Persistence.MySQLConn;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
 using System.Text;
 // using AspNetCoreRateLimit; 
 
@@ -35,7 +39,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ClinicPro_Backend", Version = "v1" });
 
-    // Configuraci�n de autenticaci�n con Bearer
+    // Configuración de autenticación con Bearer
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -62,6 +66,25 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+var serviceName = "MiWebAPI";
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()  // 📡 Captura llamadas HTTP
+            .AddHttpClientInstrumentation()  // 📡 Captura peticiones HTTP salientes
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:4317"); // Endpoint de OpenTelemetry Collector
+            });
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation() // 📊 Métricas de ASP.NET Core
+            .AddHttpClientInstrumentation(); // 📊 Métricas de llamadas HTTP
+    });
 
 // Rate Limiting > NET 7
 //builder.Services.AddRateLimiter(options =>
@@ -92,7 +115,7 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 var connectionString = builder.Configuration.GetConnectionString("MySQLConnection") ?? throw new InvalidOperationException("Connection string 'MySQLConnection' not found.");
 builder.Services.AddScoped<MySQLDatabase>(_ => new MySQLDatabase(connectionString));
 
-// Configurar autenticaci�n con JWT
+// Configurar autenticación con JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found.");
 
 builder.Services.AddAuthentication("Bearer")
@@ -124,18 +147,25 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ClinicPro_Backend v1");
+    c.RoutePrefix = "swagger"; // Cambia a "" si quieres que esté en http://localhost:8080/
+});
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<RateLimitingMiddleware>();
 
 app.UseCors("AllowFrontend");
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -146,6 +176,13 @@ app.UseAuthorization();
 //app.UseRateLimiter();
 //app.MapControllers().RequireRateLimiting("fixed");
 
-app.MapControllers();
+//app.MapControllers();
+
+app.UseHttpMetrics();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapMetrics();
+});
 
 app.Run();
